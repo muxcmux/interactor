@@ -127,6 +127,41 @@ module Interactor
         hooks.each { |hook| after_hooks.unshift(hook) }
       end
 
+      # Public: Declare hooks to run when an Interactor fails.
+      #
+      # hooks - Zero or more Symbol method names representing instance methods
+      #         to be called on failure.
+      # block - An optional block to be executed as a hook. If given, the block
+      #         is executed before methods corresponding to any given Symbols.
+      #
+      # Examples
+      #
+      #   class MyInteractor
+      #     include Interactor
+      #
+      #     on_failure :wake_up_sysadmin_in_the_middle_of_the_night
+      #
+      #     on_failure do
+      #       puts "I have failed"
+      #     end
+      #
+      #     def call
+      #       puts "called"
+      #     end
+      #
+      #     private
+      #
+      #     def wake_up_sysadmin_in_the_middle_of_the_night
+      #       # call sysadmin on their phone
+      #     end
+      #   end
+      #
+      # Returns nothing.
+      def on_failure(*hooks, &block)
+        hooks << block if block
+        hooks.each { |hook| on_failure_hooks << hook }
+      end
+
       # Internal: An Array of declared hooks to run around Interactor
       # invocation. The hooks appear in the order in which they will be run.
       #
@@ -183,6 +218,25 @@ module Interactor
       def after_hooks
         @after_hooks ||= []
       end
+
+      # Internal: An Array of declared hooks to run on Interactor failure.
+      # The hooks appear in the order in which they will be run.
+      #
+      # Examples
+      #
+      #   class MyInteractor
+      #     include Interactor
+      #
+      #     on_failure :email_sysadmin, :log_alert
+      #   end
+      #
+      #   MyInteractor.on_failure_hooks
+      #   # => [:email_sysadmin, :log_alert]
+      #
+      # Returns an Array of Symbols and Procs.
+      def on_failure_hooks
+        @on_failure_hooks ||= []
+      end
     end
 
     private
@@ -236,6 +290,13 @@ module Interactor
     # Returns nothing.
     def run_after_hooks
       run_hooks(self.class.after_hooks)
+    end
+
+    # Internal: Run on_failure hooks.
+    #
+    # Returns nothing.
+    def run_on_failure_hooks
+      run_hooks(self.class.on_failure_hooks)
     end
 
     # Internal: Run a colection of hooks. The "run_hooks" method is the common

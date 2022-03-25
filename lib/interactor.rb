@@ -44,10 +44,14 @@ module Interactor
     #   MyInteractor.call
     #   # => #<Interactor::Context>
     #
+    #   MyInteractor.call(foo: "bar") do
+    #     puts "Yielded control"
+    #   end
+    #
     # Returns the resulting Interactor::Context after manipulation by the
     #   interactor.
-    def call(context = {})
-      new(context).tap(&:run).context
+    def call(context = {}, &block)
+      new(context).tap { |i| i.run(&block) }.context
     end
 
     # Public: Invoke an Interactor. The "call!" method behaves identically to
@@ -73,7 +77,7 @@ module Interactor
     #   interactor.
     # Raises Interactor::Failure if the context is failed.
     def call!(context = {})
-      new(context).tap(&:run!).context
+      new(context).tap { |i| i.run!(&block) }.context
     end
   end
 
@@ -111,12 +115,11 @@ module Interactor
   # context is rolled back.
   #
   # Returns nothing.
-  def run
-    run!
+  def run(&block)
+    run!(&block)
   rescue Failure => e
-    if context.object_id != e.context.object_id
-      raise
-    end
+    run_on_failure_hooks
+    raise if context.object_id != e.context.object_id
   end
 
   # Internal: Invoke an Interactor instance along with all defined hooks. The
@@ -141,12 +144,12 @@ module Interactor
   #
   # Returns nothing.
   # Raises Interactor::Failure if the context is failed.
-  def run!
+  def run!(&block)
     with_hooks do
-      call
+      call(&block)
       context.called!(self)
     end
-  rescue
+  rescue StandardError
     context.rollback!
     raise
   end

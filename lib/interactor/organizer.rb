@@ -76,7 +76,11 @@ module Interactor
       # Returns nothing.
       def call
         self.class.organized.each do |interactor|
-          interactor.call!(context)
+          i = interactor.new(context)
+          i = i.run!
+        rescue Failure
+          i.send :run_on_failure_hooks
+          raise
         end
       end
     end
