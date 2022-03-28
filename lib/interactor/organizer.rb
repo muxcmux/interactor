@@ -44,11 +44,14 @@ module Interactor
       #   end
       #
       # Returns nothing.
-      def organize(*interactors)
-        @organized = interactors.flatten
+      def organize(*interactors, **options)
+        organized << {
+          interactors: interactors.flatten,
+          options: options || {}
+        }
       end
 
-      # Internal: An Array of declared Interactors to be invoked.
+      # Internal: An Array of declared Interactors with options to be invoked.
       #
       # Examples
       #
@@ -56,12 +59,13 @@ module Interactor
       #     include Interactor::Organizer
       #
       #     organize InteractorOne, InteractorTwo
+      #     organize ConditionalInteractor, if: -> { true }
       #   end
       #
       #   MyOrganizer.organized
       #   # => [InteractorOne, InteractorTwo]
       #
-      # Returns an Array of Interactor classes or an empty Array.
+      # Returns an Array of Interactor classes with options or an empty Array.
       def organized
         @organized ||= []
       end
@@ -75,9 +79,22 @@ module Interactor
       #
       # Returns nothing.
       def call
-        self.class.organized.each do |interactor|
+        self.class.organized.each do |organized|
+          run_organized(organized[:interactors], organized[:options])
+        end
+      end
+
+      def run_organized(interactors, options = {})
+        run = if options[:if]
+                options[:if].is_a?(Symbol) ? send(options[:if]) : instance_eval(&options[:if])
+              else
+                true
+              end
+        return unless run
+
+        interactors.each do |interactor|
           i = interactor.new(context)
-          i = i.run!
+          i.run!
         rescue Failure
           i.send :run_on_failure_hooks
           raise
