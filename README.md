@@ -39,14 +39,16 @@ class MyOrganizer
   include Interactor::Organizer
 
   organize One, Two
-  organize Three, Four if: :run_three_and_four?
-  organize Five, One if: proc { 1 + 1 == 2 }
+  organize Three, Four, if: :run_three_and_four?
+  organize Five, One, if: proc { 1 + 1 == 2 }
 
   private
   def run_three_and_four?
     false
   end
 end
+
+MyOrganizer.call
 
 # Runs One, Two, Five and One
 ```
