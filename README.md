@@ -3,14 +3,14 @@
 A fork of [collective idea's interactor](https://github.com/collectiveidea/interactor)
 with the following additions:
 
-### Support for passing blocks to an interactor
+#### Support for passing blocks to an interactor
 
 ```ruby
 class MyInteractor
   include Interactor
 
   def call
-    3.times do { yield i }
+    3.times { |i| yield i }
   end
 end
 
@@ -24,31 +24,31 @@ end
 # 3
 ```
 
-### An additional `on_failure` hook
+#### An additional `on_failure` hook
 
 Ability to define an `on_failure` hook which, you guessed it, fires when an
 interactor fails (via `context.fail!`)
 
-### Organizers groups interactors for each call to `organize`
+#### Organizers group interactors together for each call to `organize`
 
 And you are also able to pass an `if:` option to the organize call with either a
-symbol or a proc, which runs to determine if the group should be ran
+symbol or a proc which runs to determine if the group should run
 
 ```ruby
 class MyOrganizer
   include Interactor::Organizer
 
   organize One, Two
-  organize Three, if: :run_three?
-  organize Four, if: proc { 1 + 1 == 2 }
+  organize Three, Four if: :run_three_and_four?
+  organize Five, One if: proc { 1 + 1 == 2 }
 
   private
-  def run_three?
+  def run_three_and_four?
     false
   end
 end
 
-# Runs One, Two and Four in that order
+# Runs One, Two, Five and One
 ```
 
 ## Getting Started
