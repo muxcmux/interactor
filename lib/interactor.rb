@@ -76,7 +76,7 @@ module Interactor
     # Returns the resulting Interactor::Context after manipulation by the
     #   interactor.
     # Raises Interactor::Failure if the context is failed.
-    def call!(context = {})
+    def call!(context = {}, &block)
       new(context).tap { |i| i.run!(&block) }.context
     end
   end

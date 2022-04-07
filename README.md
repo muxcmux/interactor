@@ -1,17 +1,62 @@
 # Interactor
 
-[![Gem Version](https://img.shields.io/gem/v/interactor.svg)](http://rubygems.org/gems/interactor)
-[![Build Status](https://github.com/collectiveidea/interactor/actions/workflows/tests.yml/badge.svg)](https://github.com/collectiveidea/interactor/actions/workflows/tests.yml)
-[![Maintainability](https://img.shields.io/codeclimate/maintainability/collectiveidea/interactor.svg)](https://codeclimate.com/github/collectiveidea/interactor)
-[![Test Coverage](https://img.shields.io/codeclimate/coverage-letter/collectiveidea/interactor.svg)](https://codeclimate.com/github/collectiveidea/interactor)
-[![Ruby Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://github.com/testdouble/standard)
+A fork of [collective idea's interactor](https://github.com/collectiveidea/interactor)
+with the following additions:
+
+### Support for passing blocks to an interactor
+
+```ruby
+class MyInteractor
+  include Interactor
+
+  def call
+    3.times do { yield i }
+  end
+end
+
+MyInteractor.call do |i|
+  puts i
+end
+
+# Output:
+# 1
+# 2
+# 3
+```
+
+### An additional `on_failure` hook
+
+Ability to define an `on_failure` hook which, you guessed it, fires when an
+interactor fails (via `context.fail!`)
+
+### Organizers groups interactors for each call to `organize`
+
+And you are also able to pass an `if:` option to the organize call with either a
+symbol or a proc, which runs to determine if the group should be ran
+
+```ruby
+class MyOrganizer
+  include Interactor::Organizer
+
+  organize One, Two
+  organize Three, if: :run_three?
+  organize Four, if: proc { 1 + 1 == 2 }
+
+  private
+  def run_three?
+    false
+  end
+end
+
+# Runs One, Two and Four in that order
+```
 
 ## Getting Started
 
 Add Interactor to your Gemfile and `bundle install`.
 
 ```ruby
-gem "interactor", "~> 3.0"
+gem "interactor", git: 'git@github.com:/muxcmux/interactor'
 ```
 
 ## What is an Interactor?
